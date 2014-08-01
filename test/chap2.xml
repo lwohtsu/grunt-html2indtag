@@ -1,0 +1,1083 @@
+<?xml version="1.0" encoding="UTF-8"?><story xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/" xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/"><body>
+<p>第2章　3D描画のキホン</p>
+<p>（リード文）SwordBoutのソースコードを見ていく前に、200行程度のプログラムを一緒に入力しながら3D描画の基礎を学んでいきましょう。ここでは3Dモデルの読み込みから表示、移動、回転、アニメーション、カメラの設定などについて解説し、キャラクターがウインドウ内を自在に走り回れるようにします。</p>
+<h1><alert>h1</alert>モデルを表示する</h1>
+<p>画面にSwordBoutの主人公を表示してみましょう。モデルがどんなファイルで構成されているのかを理解してから、プログラムを書いて読み込みから表示までを行います。</p>
+<h2><alert>h2</alert>プロジェクトを用意する</h2>
+<p>SwordBoutのソースコードは3D描画の基礎知識がないままに読むには高度なので、まずはこの章の説明に沿って80行程度の簡単なプログラムを入力し、3D描画の基本を一緒に学んでいきましょう。それでは「3dbasic」という名前のプロジェクトを作成し、「WinMain.cpp」というソースコードを追加します。</p>
+<figure><img href="file://img/c3d-c2-01-01.png" data-zoom="50" data-clip="0+0+1154+450" /></figure>
+<figcaption>キャプションなし</figcaption>
+<div_zuchuu><alert>図中</alert>［プロジェクト］→［新しい項目の追加］を選択</div_zuchuu>
+<p>↓↓↓</p>
+<figure><img href="file://img/c3d-c2-01-02.png" data-zoom="60" /></figure>
+<figcaption>キャプションなし</figcaption>
+<div_zuchuu><alert>図中</alert>「WinMain.cpp」を作成</div_zuchuu>
+<p>そして、DXライブラリ用のプロジェクト設定を行ってください（P.■■参照）。</p>
+<figure><img href="file://img/c3d-c2-01-03.png" data-zoom="60" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>そこまで完了したら、次のソースコードを入力します。</p>
+<div_hen><alert>編集</alert>編：コード内の丸数字は図中文字にする</div_hen>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;          ❶DxLib.hのインクルード</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){  ❷WinMain関数</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);         ❸ウインドウモード切り替え</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);        ❹ウインドウサイズの変更</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;  ❺DXライブラリの初期化</code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);      ❻ウラ画面描画に設定</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){    ❼メインループ</code></pre>
+<pre><code>        ClearDrawScreen();          ❽画面消去</code></pre>
+<pre><code>        DrawBox(<span_number>0</span_number>, <span_number>0</span_number>, <span_number>600</span_number>, <span_number>400</span_number>, <span_number>0xFFFF00</span_number>, TRUE);    ❾四角形を描画</code></pre>
+<pre><code></code></pre>
+<pre><code>        ScreenFlip();       ❿画面切り替え</code></pre>
+<pre><code>    }</code></pre>
+<pre><code>    DxLib_End();            ⑪DXライブラリの終了処理</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>return</span_keyword> <span_number>0</span_number>;</code></pre>
+<pre><code>}</code></pre>
+</codelist>
+<h6><alert>h6</alert>❶DxLib.hのインクルード</h6>
+<p>DXライブラリのヘッダファイルを取り込みます。これでDXライブラリの関数が使えるようになります。</p>
+<h6><alert>h6</alert>❷WinMain関数</h6>
+<p>コンソールアプリケーションはmain関数から始まりますが、ウインドウアプリケーションは<strong>WinMain関数</strong>から始まります。HINSTANCEやLPSTRはマイクロソフトが定義した型名です。正確に入力していれば特に気にする必要はありません。</p>
+<h6><alert>h6</alert>❸ウインドウモード切り替え</h6>
+<p><strong>ChangeWindowMode関数</strong>の引数をTRUEにするとDXライブラリの画面をウインドウモードにすることができます。FALSEを指定するか、この行自体を削除すると、全画面モードで起動します。</p>
+<h6><alert>h6</alert>❹ウインドウサイズの変更</h6>
+<p>ウインドウの描画領域のサイズを1200×800ピクセルに変更します。第3引数の「32」は色数の指定で、32ビットカラー＝フルカラーを指定したことになります。</p>
+<h6><alert>h6</alert>❺DXライブラリの初期化</h6>
+<p><strong>DxLib_Init関数</strong>はウインドウの表示などの初期化処理を行います。この関数が―1を返す場合、何らかのトラブルで初期化に失敗しています。その場合はreturn文でWinMain関数から脱出、つまりプログラムを終了します。</p>
+<h6><alert>h6</alert>❻ウラ画面描画に設定</h6>
+<p>DXライブラリでは、表示中のオモテ画面と描画用のウラ画面の2枚を切り替えながら表示するダブルバッファ方式で描画中のちらつきが見えるのを避けています。「SetDrawScreen(DX_SCREEN_BACK)」と指定することで、描画対象をウラ画面にします。ウラ画面に描画した内容はScreenFlip関数で画面を切り替えないと表示されません。</p>
+<h6><alert>h6</alert>❼メインループ</h6>
+<p>ゲームプログラムは基本的に繰り返し続けるループの中で書きます。whileループの条件として書いている<strong>ProcessMessage関数</strong>は,Windowsが送ってくるメッセージを処理するためのものです。特に何かの結果を出すものではありませんが、これが入っていないとプログラムが正常に動作しません。<strong>CheckHitKey関数</strong>は押されているキーをチェックするためのもので、ここでは<del>ÌEscÔ</del>キーが押されていたらループを終了するようにしています。</p>
+<h6><alert>h6</alert>❽画面消去</h6>
+<p>ここからループ内の処理です。<strong>ClearDrawScreen関数</strong>は描画対象の画面（この場合はウラ画面）を消去します。</p>
+<h6><alert>h6</alert>❾四角形を描画</h6>
+<p><strong>DrawBox関数</strong>は画面に四角形を描画します。ここでは（0,0）-（599, 399）の範囲に黄色（#FFFF00）の四角形を塗りつぶし描画しています。</p>
+<h6><alert>h6</alert>❿画面切り替え</h6>
+<p><strong>ScreenFlip関数</strong>でオモテ画面とウラ画面を切り替え、ウラ画面に描画した内容を表示します。</p>
+<h6><alert>h6</alert>⑪DXライブラリの終了処理</h6>
+<p><strong>DxLib_End関数</strong>は、DXライブラリが使用していたメモリ領域を開放し、ウインドウを閉じます。</p>
+<p>
+</p>
+<p>このコードを実行すると、ウインドウ上に2Dの黄色い四角形が描画されます。<del>ÌEscÔ</del>キーを押すと終了します。</p>
+<figure><img href="file://img/c3d-c2-01-04.png" data-zoom="50" data-clip="0+0+1154+450" /></figure>
+<figcaption>キャプションなし</figcaption>
+<div_zuchuu><alert>図中</alert>［ローカルWindowsデバッガー］をクリック</div_zuchuu>
+<p>↓↓↓<img href="file://img/c3d-c2-01-05.png" data-zoom="40" /></p>
+<figcaption>キャプションなし</figcaption>
+<div_zuchuu><alert>図中</alert>黄色い四角形が描画された</div_zuchuu>
+<div_zuchuu><alert>図中</alert><del>ÌEscÔ</del>を押して終了</div_zuchuu>
+<p>これがDXライブラリで書くプログラムの基本構造で、2Dの場合も3Dの場合も変わりありません。メインループ内のClearDrawScreenとScreenFlipの間に、いろいろな描画処理を書いてゲームを作っていきます。</p>
+<table>
+<tr>
+<td>新しく登場した関数</td>
+</tr>
+<tr>
+<td><strong>ChangeWindowMode関数</strong>
+機能：ウインドウモードか全画面モードかを指定する。引数がTRUEの場合はウインドウ、FALSEの場合は全画面モードとなる。
+文法：<code>int ChangeWindowMode( int Flag )</code></td>
+</tr>
+<tr>
+<td><strong>DxLib_Init関数</strong>
+機能：DXライブラリを初期化し、ウインドウを表示する。返値が―１の場合は、初期化失敗。
+文法：int DxLib_Init( void )</td>
+</tr>
+<tr>
+<td><strong>SetDrawScreen関数</strong>
+機能：描画の対象となる画面を指定する。定数DX_SCREEN_FRONTを指定した場合はオモテ画面（初期設定）、DX_SCREEN_BACKを指定した場合はウラ画面となる。
+文法：<code>int SetDrawScreen( int DrawScreen )</code></td>
+</tr>
+<tr>
+<td><strong>CheckHitKey</strong>
+機能：定数で指定したキーが押されているかチェックし、押されている場合は1を、押されていない場合は0を返す。
+文法：int CheckHitKey( int KeyCode ) ;</td>
+</tr>
+<tr>
+<td><strong>ClearDrawScreen</strong>
+機能：画面を消去する。
+文法：int ClearDrawScreen(void)</td>
+</tr>
+<tr>
+<td><strong>DrawBox関数</strong>
+機能：（x1, y1）を左上の頂点、（x2-1, y2-1）を右下の頂点とする四角形をColorで指定された色で描画する。引数FillFlagがTRUEの場合は四角形の内側を塗りつぶす。
+文法：<code>int DrawBox( int x1 , int y1 , int x2 , int y2 , int Color , int FillFlag )</code></td>
+</tr>
+<tr>
+<td><strong>ScreenFlip関数</strong>
+機能：オモテ画面とウラ画面を入れ替える。
+文法：int ScreenFlip(void)</td>
+</tr>
+<tr>
+<td><strong>DxLib_End関数</strong>
+機能：DXライブラリの終了処理を行う。
+文法：<code>int DxLib_End(void)</code></td>
+</tr>
+</table>
+<h2><alert>h2</alert>そもそもモデルとは何？</h2>
+<p>続いてモデルの読み込みと表示ですが、そもそもモデルとはどんなデータなのでしょうか？　まずはそこを理解するところから進めていきましょう。ダウンロードサンプルファイルの「3dbasic」から「Player」フォルダを探し、プロジェクトフォルダ内にコピーしてください。</p>
+<p><img href="file://img/c3d-c2-01-06.png" data-zoom="60" data-clip="0+0+1024+300" alt="キャプションなし"/>
+↓↓↓<img href="file://img/c3d-c2-01-07.png" data-zoom="60" /></p>
+<figcaption>Playerフォルダをプロジェクトフォルダにコピーして中身を確認する</figcaption>
+<p>大量のファイルがありますが、この中にある「PC.mv1」が主人公キャラのモデルデータが記録されているファイルです。<strong>mv1</strong>はDXライブラリ専用のモデルデータやモーションデータを記録できるファイルフォーマットで、PC.mv1、Sabel.mv1、Saya.mv1の3つがモデルデータ、それ以外はアニメーション用のモーションデータが記録されています（モーションデータについてはP.■■で説明します）。</p>
+<p>また、<strong>tga</strong>（TARGA【ターガ】とも呼ぶ）形式のファイルは、モデルに貼り付ける<strong>テクスチャ</strong>の画像データです。先にテクスチャから見てみましょう。Windows標準のフォトビューアーでは表示できないので、GIMP（<code>http://www.gimp.org/</code>）などのグラフィックソフトで開きます。</p>
+<div_hen><alert>編集</alert>編：画像横並びに</div_hen>
+<p><img href="file://img/c3d-c2-01-08.png" data-zoom="60" alt="Hero1024.tga"/>
+<img href="file://img/c3d-c2-01-09.png" data-zoom="60" /></p>
+<figcaption>WP.tga</figcaption>
+<p>引き延ばされていてあまり格好よくありませんが、これは人間の表面を平面に貼り付けたような状態だからです。立体のモデルデータの周りに貼り付けられると、見栄えのする3Dモデルとして表示されます。</p>
+<p>続いてモデルデータを見てみます。DXライブラリに付属している<strong>モデルビューアー</strong>を使ってPC.mv1を開いてみましょう。モデルビューアーを起動するには、DXライブラリのフォルダ内のToolsフォルダ→DxLibModelViewerフォルダにある実行ファイルをダブルクリックします。</p>
+<figure><img href="file://img/c3d-c2-01-10.png" data-zoom="60" data-clip="0+0+1024+300" /></figure>
+<figcaption>DxLibModeViewer.exeをダブルクリックする</figcaption>
+<p>起動したら［ファイル］メニューから［開く］を選択し、PC.mv1を選択します。カーソルキーで回転、マウスホイールでズームできるので、いろいろと視点を変えて見てください。<img href="file://img/c3d-c2-01-13.png" data-zoom="40" /></p>
+<figcaption>キャプションなし</figcaption>
+<p>［表示］メニューから［ワイヤフレーム表示］を選択すると、テクスチャが貼られていない状態で表示できます。これが生のモデルデータに近いものです。無数の頂点とそれらをつなぐ直線で構成されています。顔のあたりは遠目にはテクスチャが残っているようにも見えますが、拡大すると色が付いた線の集まりだととわかります。</p>
+<p><img href="file://img/c3d-c2-01-16.png" data-zoom="40" alt="キャプションなし"/>
+<img href="file://img/c3d-c2-01-17.png" data-zoom="40" /></p>
+<figcaption>ワイヤーフレーム表示</figcaption>
+<p>本書ではモデルデータの作り方については解説しませんが、モデルデータというものは主に次のような情報でできているということは、大まかに理解しておいてください。</p>
+<ul>
+<li>頂点座標</li>
+<li>どの頂点がつながっているかを表すインデックス情報</li>
+<li>頂点の色などを記録したマテリアル（材質）情報</li>
+<li>テクスチャのファイル名</li>
+<li>テクスチャのどの部分がどの頂点に来るかを示すUV座標</li>
+</ul>
+<h2><alert>h2</alert>フレームと関節</h2>
+<p>モデルビューアーの［フレーム］ボタンを押すと、<strong>フレーム</strong>の一覧が表示されます。<strong>フレーム</strong>とはモデルデータを管理しやすくするための構造情報のことで、3D関連ツールによっては<strong>ボーン</strong>や<strong>ノード</strong>、<strong>ジョイント</strong>とも呼ばれます。PC.mv1の場合、「model」フレームの子として「kutu」「arm」「huku」「skin」などのフレームがあり、体の部分ごとにグループ分けされていることがわかります。モデルビューアーではフレームごとに表示／非表示を切り替えることができるので試してみてください。</p>
+<div_hen><alert>編集</alert>編：一部拡大なので、横に並べるor重ねるなど配置の工夫をお願いします</div_hen>
+<p><img href="file://img/c3d-c2-01-19.png" data-zoom="80" data-clip="0+0+400+600" alt="キャプションなし"/>
+<img href="file://img/c3d-c2-01-19.png" data-zoom="40" /></p>
+<figcaption>フレーム名の横の目のアイコンをクリックすると、表示／非表示を切り替えられる</figcaption>
+<p>フレームを選択すると、下にそのフレームが持つ<strong>メッシュ</strong>（頂点の集まりのこと）などの情報が表示されます。</p>
+<p>フレーム一覧をよく見ると、「model」フレームの下にいくつかの子を持つ「root」フレームがあります。これらはアニメーション用の関節として使われるフレームです。フレーム名をクリックすると、位置を示す黄色いボールが表示されるので確認してみてください。</p>
+<figure><img href="file://img/c3d-c2-01-21.png" data-zoom="80" data-clip="0+0+700+600" /></figure>
+<figcaption>「elbowR」フレームを選択した状態</figcaption>
+<p>PC.mv1の場合、次のような関節フレーム構造になっています。地面に接するポイントにroot（根っこ）があり、その子としてへそあたりにcenterがあります。そこからhip（尻）とspineA（脊椎【せきつい】）の2つの子フレームに分かれ、それぞれが上半身、下半身のフレームの親となっています。また、右手の先にWPというフレームがあります。これはWeapon Pointの略で、武器を持つ部分です。</p>
+<figure><img href="file://chap2fig/chap2fig.001.jpg" data-clip="0+0+580+340" /></figure>
+<figcaption>PC.mv1の関節フレーム構造</figcaption>
+<h2><alert>h2</alert>モデルを読み込んで表示する</h2>
+<p>モデルデータの全体像がつかめたところで、ファイルを読み込んで表示しましょう。非常に簡単なのでまとめて説明します。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1;     ★★この行マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>; ★★この行マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){</code></pre>
+<pre><code>        ClearDrawScreen();</code></pre>
+<pre><code>        DrawBox(<span_number>0</span_number>, <span_number>0</span_number>, <span_number>600</span_number>, <span_number>400</span_number>, <span_number>0xFFFF00</span_number>, TRUE);</code></pre>
+<pre><code></code></pre>
+<pre><code>        MV1DrawModel(model1);   ★★この行マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>        ScreenFlip();</code></pre>
+<pre><code>    }</code></pre>
+<pre><code>    DxLib_End();</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>return</span_keyword> <span_number>0</span_number>;</code></pre>
+<pre><code>}</code></pre>
+</codelist>
+<p>DXライブラリでは画像やモデルなどを読み込んだら、管理用のハンドルという整数値を返すしくみになっています。<strong>モデルハンドル</strong>を記録するための変数model1を定義します。次にループを開始する前に<strong>MV1LoadModel関数</strong>でモデルデータを読み込みます。PC.mv1はPlayerフォルダ内にあるので、「Player¥¥PC.mv1」と指定します。テクスチャ画像は同じフォルダ内にあれば自動的に読み込まれます。</p>
+<p>最後にループ内で<strong>MV1DrawModel関数</strong>を呼び出して、モデルを描画します。引数はモデルハンドルを記録した変数のみです。</p>
+<p>読み込みと表示に必要なのはこれだけです。早速実行してみましょう。</p>
+<figure><img href="file://img/c3d-c2-01-22.png" data-zoom="40" /></figure>
+<figcaption>実行結果</figcaption>
+<p>画面の左下に小さく表示されたのがわかりますか？　どうも位置やサイズがあまりよろしくないようですが、次のセクションで移動方法などを解説して、大きく見えるようにします。</p>
+<table>
+<tr>
+<td>新しく登場した関数</td>
+</tr>
+<tr>
+<td><strong>MV1LoadModel関数</strong>
+3Dモデルをメモリにロードする。成功した場合はモデルハンドルを返し、失敗した場合は-1を返す。
+文法：<code>int MV1LoadModel( char *FileName )</code></td>
+</tr>
+<tr>
+<td><strong>MV1DrawModel関数</strong>
+機能：モデルハンドルが示すモデルを画面に描画する。
+文法：<code>int MV1DrawModel( int MHandle )</code></td>
+</tr>
+</table>
+<h3><alert>h3</alert>コラム：DXライブラリの対応モデルフォーマット</h3>
+<p>SwordBoutサンプルモデルは、Autodesk Maya 2008で作成したモデルデータ、モーションデータを、モデルビューアーを使ってmv1形式に変換したものです。MAYAは高額なソフトウェアなので、アマチュアゲーム作成では手が出ないという人も少なくないでしょう。</p>
+<p>MV1LoadModel関数は、mv1形式の他にx（DirectX形式）、mqo（メタセコイア形式）、pmd（MikuMikuDance形式）、pmx（MikuMikuDance形式の新バージョン）のファイルを読み込むことができるので、これらに対応した3Dモデルソフトであれば自由に選ぶことができます。</p>
+<p>ただし、専用のmv1形式の読み込みがもっとも速いため、モデルビューアーの［ファイル］メニューを利用して変換しておくことをおすすめします。</p>
+<hr/>
+<p>（コラムここまで）</p>
+<h1><alert>h1</alert>モデルを移動＆回転する</h1>
+<p>（リード文）読み込んだモデルを自在に移動、回転してみましょう。より複雑な動きをさせるには、ベクトルと行列の扱いを学ぶ必要があります。</p>
+<h2><alert>h2</alert>モデルの移動とワールド座標</h2>
+<p>前セクションではモデルを読み込んで表示する方法を解説しましたが、左端に小さく表示されてしまいました。モデルを任意の位置に配置する方法を知らなければいけません。DXライブラリでモデルを移動する一番簡単な方法は<strong>MV1SetPosition関数</strong>を使うことです。説明の前にまずはやってみましょう。WinMain.cppを次のように修正してください。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1;</code></pre>
+<pre><code>    VECTOR pos = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);★★マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){</code></pre>
+<pre><code>        ClearDrawScreen();</code></pre>
+<pre><code>        DrawBox(<span_number>0</span_number>, <span_number>0</span_number>, <span_number>1200</span_number>, <span_number>800</span_number>, <span_number>0xFFFFFF</span_number>, TRUE);   ★★マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>        MV1SetPosition(model1, pos);    ★★マーカー</code></pre>
+<pre><code>        MV1DrawModel(model1);</code></pre>
+<pre><code></code></pre>
+<pre><code>        ScreenFlip();</code></pre>
+<pre><code>    }</code></pre>
+<pre><code>    DxLib_End();</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>return</span_keyword> <span_number>0</span_number>;</code></pre>
+<pre><code>}</code></pre>
+</codelist>
+<figure><img href="file://img/c3d-c2-02-01.png" data-zoom="40" /></figure>
+<figcaption>実行結果</figcaption>
+<p>たった3行の修正ですが、モデルが画面中央に表示されるようになりました。その内1行はDrawBox関数でウインドウ全体を白く塗りつぶす処理ですから、実質2行です。</p>
+<p>
+</p>
+<p>関数の使い方などを説明する前に、3D座標について説明していきましょう。第1章でも簡単に説明したように、3D描画の3Dは横＋縦＋奥行きのことです。正確には<strong>X軸、Y軸、Z軸</strong>といいます。3D座標で位置を指定するには、この3つの座標を指定する必要があります。</p>
+<figure><img href="file://chap2fig/chap2fig.002.jpg" data-zoom="90" data-clip="0+0+700+320" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>先ほどのサンプルでは<strong>VECTOR【ベクトル】型</strong>の変数を定義していましたが、これはx、z、yの3つのメンバ変数を持つ構造体で、値を設定するときはx、y、zのメンバそれぞれに代入するか、<strong>VGet関数</strong>を利用します。</p>
+<h6><alert>h6</alert>DXライブラリ内の定義</h6>
+<codelist data-type="cpp">
+<pre><code><span_comment>// ベクトルデータ型</span_comment></code></pre>
+<pre><code><span_keyword>typedef</span_keyword> <span_keyword>struct</span_keyword> tagVECTOR</code></pre>
+<pre><code>{</code></pre>
+<pre><code>    <span_keyword>float</span_keyword>                   x, y, z ;</code></pre>
+<pre><code>} VECTOR, *LPVECTOR, XYZ, *LPXYZ ;</code></pre>
+</codelist>
+<p>モデルデータ自体もVECTOR型のような3D座標でデータを記録しています。ただしその座標は、モデルデータ内の原点（0, 0, 0）を基準としたものです。PC.mv1の場合なら、モデルビューアーで確認したrootフレーム（足元のあたり）の座標が原点となっています。これを画面上に表示するには、画面に表示されるための仮想的な空間に合わせた座標に変換しなければいけません。モデル内の原点を基準とした座標を<strong>ローカル座標系</strong>、仮想空間内の座標を<strong>ワールド座標系</strong>と呼び、モデルを配置する——つまり、ローカル座標系の座標をワールド座標系に変換することを<strong>ワールド変換</strong>といいます。</p>
+<figure><img href="file://chap2fig/chap2fig.003.jpg" data-zoom="90" data-clip="0+0+700+400" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>DXライブラリではモデルハンドルを指定して<strong>MV1SetPosition関数</strong>を呼び出すと、モデルを特定の位置に表示するようにワールド変換することができます。先ほどのサンプルコードでやっていたのはそういうことです。</p>
+<p>
+</p>
+<p>さて、ここで最初にモデルを表示したときに、モデルが左下端に半分だけ表示された理由を説明しましょう。種を明かすと単純な話で、DXライブラリは特にカメラなどの設定を行わない場合、ウインドウの左下にあたる位置をワールド座標の原点（0, 0, 0）とします。ですから、特に位置を指定しなければ、そこにPC.mv1の原点であるrootフレーム（足元）が合うように表示されます。</p>
+<p>今回はMV1SetPostion関数で（600, 300, -400）を指定したので、ウインドウの中央あたりに大きくキャラクターが表示されるようになったのです。</p>
+<table>
+<tr>
+<td>新しく登場した関数</td>
+</tr>
+<tr>
+<td><strong>MV1SetPosition関数</strong>
+機能：モデルの座標をセットする。
+文法：<code>int MV1SetPosition( int MHandle, VECTOR Position )</code></td>
+</tr>
+<tr>
+<td><strong>VGet関数</strong>
+機能：3つのfloat値を指定してベクトルを取得する。
+文法：<code>VECTOR VGet( float x, float y, float z )</code></td>
+</tr>
+</table>
+<h2><alert>h2</alert>キーボード操作に合わせてモデルを移動する</h2>
+<p>任意の位置にモデルを表示できるようになったので、続いてキーボード操作で移動できるようにしてみましょう。先ほどCheckHitKey関数を紹介しましたが、移動などのゲームでよく使うキーは<strong>GetJoypadInputState関数</strong>で取得したほうが便利です。チェックできるキーの数は減りますが、ジョイパッドのボタンもまとめて取得できます。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1;</code></pre>
+<pre><code>    VECTOR pos = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> key;    ★★マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){    ★★ここからマーカー</code></pre>
+<pre><code>        <span_comment>//キー操作</span_comment></code></pre>
+<pre><code>        key = GetJoypadInputState(DX_INPUT_KEY_PAD1);</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_DOWN)   pos.z -= <span_number>4.0f</span_number>;</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_UP)     pos.z += <span_number>4.0f</span_number>;</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_LEFT)   pos.x -= <span_number>4.0f</span_number>;</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_RIGHT)  pos.x += <span_number>4.0f</span_number>;  ★★ここまでマーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>        ClearDrawScreen();</code></pre>
+<pre><code>        DrawBox(<span_number>0</span_number>, <span_number>0</span_number>, <span_number>1200</span_number>, <span_number>800</span_number>, <span_number>0xFFFFFF</span_number>, TRUE);</code></pre>
+<pre><code></code></pre>
+<pre><code>        MV1SetPosition(model1, pos);</code></pre>
+<pre><code>        MV1DrawModel(model1);</code></pre>
+<pre><code></code></pre>
+<pre><code>        ScreenFlip();</code></pre>
+<pre><code>    }</code></pre>
+<pre><code>    DxLib_End();</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>return</span_keyword> <span_number>0</span_number>;</code></pre>
+<pre><code>}</code></pre>
+</codelist>
+<p>このコードを実行すると、カーソルキーの上下で手前から奥に（つまりz軸方向）、左右のキーで左右に（つまりx軸方向）にモデルが移動できます。キー入力に応じて変数posのx、zを加減算しているわけですね。</p>
+<p><img href="file://img/c3d-c2-02-03.png" data-zoom="40" alt="キャプションなし"/>
+<img href="file://img/c3d-c2-02-04.png" data-zoom="40" /></p>
+<figcaption>カーソルキーで移動できるようになった</figcaption>
+<p>GetJoypadInputState関数の引数はチェック対象を表す定数で、次の6種類があります。</p>
+<table>
+<tr>
+<td>定数</td>
+<td>チェック対象</td>
+</tr>
+<tr>
+<td>DX_INPUT_KEY_PAD1</td>
+<td>キー入力とパッド１入力</td>
+</tr>
+<tr>
+<td>DX_INPUT_PAD1</td>
+<td>パッド１入力</td>
+</tr>
+<tr>
+<td>DX_INPUT_PAD2</td>
+<td>パッド２入力</td>
+</tr>
+<tr>
+<td>DX_INPUT_PAD3</td>
+<td>パッド３入力</td>
+</tr>
+<tr>
+<td>DX_INPUT_PAD4</td>
+<td>パッド４入力</td>
+</tr>
+<tr>
+<td>DX_INPUT_KEY</td>
+<td>キー入力</td>
+</tr>
+</table>
+<p>上のソースコードでは「DX_INPUT_KEY_PAD1」を指定しているので、キー入力と1つ目のジョイパッドがチェックされます。</p>
+<p>関数の返値は押されたキーまたはボタンを表す定数です。</p>
+<table>
+<tr>
+<td>定数</td>
+<td>ボタン</td>
+<td>キーボード</td>
+</tr>
+<tr>
+<td>PAD_INPUT_DOWN</td>
+<td>↓</td>
+<td><del>Ì↓Ô</del>キー、テンキーの2キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_LEFT</td>
+<td>←</td>
+<td><del>Ì←Ô</del>キー、テンキーの4キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_RIGHT</td>
+<td>→</td>
+<td><del>Ì→Ô</del>キー、テンキーの6キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_UP</td>
+<td>↑</td>
+<td><del>Ì↑Ô</del>キー、テンキーの8キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_A</td>
+<td>A(1)ボタン</td>
+<td><del>ÌZÔ</del>キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_B</td>
+<td>B(2)ボタン</td>
+<td><del>ÌXÔ</del>キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_C</td>
+<td>C(3)ボタン</td>
+<td><del>ÌCÔ</del>キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_X</td>
+<td>X(4)ボタン</td>
+<td><del>ÌAÔ</del>キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_Y</td>
+<td>Y(5)ボタン</td>
+<td><del>ÌSÔ</del>キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_Z</td>
+<td>Z(6)ボタン</td>
+<td><del>ÌDÔ</del>キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_L</td>
+<td>L(7)ボタン</td>
+<td><del>ÌQÔ</del>キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_R</td>
+<td>R(8)ボタン</td>
+<td><del>ÌWÔ</del>キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_START</td>
+<td>STARTボタン</td>
+<td><del>ÌEscÔ</del>キー</td>
+</tr>
+<tr>
+<td>PAD_INPUT_M</td>
+<td>Mボタン</td>
+<td><del>ÌSpaceÔ</del>キー</td>
+</tr>
+</table>
+<p>複数のキーが同時に押された場合、GetJoypadInputState関数は押されたキーを表す定数を合計した数値を返します。たとえば<del>Ì←Ô</del>と<del>Ì↑Ô</del>が同時に押された場合、PAD_INPUT_LEFT（実体は整数の2）とPAD_INPUT_UP（整数の8）の合計（つまり10）が返されます。キーを表す定数には2進数で表すとビットが重ならない数値が割り当てられているので、合計してもキーを表すビットの状態は変わりません。そこでビット演算子の＆（アンド）を利用して特定のキーの状態をチェックします。</p>
+<h2><alert>h2</alert>モデルを回転させる</h2>
+<p>続いてキーを押した方向にモデルの向きを変えてみましょう。向きを変えるというのはモデルを回転させるということです。x、y、zそれぞれの軸を中心に回転することができ、この場合は回転の軸は縦、つまりy軸となります。<strong>MV1SetRotationXYZ関数</strong>を使ってy軸回転をモデルに設定してやればいいのです。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1;</code></pre>
+<pre><code>    VECTOR pos = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> key;</code></pre>
+<pre><code>    <span_keyword>enum</span_keyword> Direction{ DOWN, LEFT, UP, RIGHT } direction = DOWN;   ★★マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){</code></pre>
+<pre><code>        <span_comment>//キー操作</span_comment></code></pre>
+<pre><code>        key = GetJoypadInputState(DX_INPUT_KEY_PAD1);</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_DOWN)   { pos.z -= <span_number>4.0f</span_number>; direction = DOWN; }     ★★ここからマーカー</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_UP)     { pos.z += <span_number>4.0f</span_number>; direction = UP; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_LEFT)   { pos.x -= <span_number>4.0f</span_number>; direction = LEFT; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_RIGHT)  { pos.x += <span_number>4.0f</span_number>; direction = RIGHT; }     ★★ここまでマーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>        ClearDrawScreen();</code></pre>
+<pre><code>        DrawBox(<span_number>0</span_number>, <span_number>0</span_number>, <span_number>1200</span_number>, <span_number>800</span_number>, <span_number>0xFFFFFF</span_number>, TRUE);</code></pre>
+<pre><code></code></pre>
+<pre><code>        MV1SetRotationXYZ(model1, VGet(<span_number>0.0f</span_number>, <span_number>1.57f</span_number> * direction, <span_number>0.0f</span_number>)); ★★マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>        MV1SetPosition(model1, pos);</code></pre>
+<pre><code>        MV1DrawModel(model1);</code></pre>
+<pre><code></code></pre>
+<pre><code>        ScreenFlip();</code></pre>
+<pre><code>    }</code></pre>
+<pre><code>    DxLib_End();</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>return</span_keyword> <span_number>0</span_number>;</code></pre>
+<pre><code>}</code></pre>
+</codelist>
+<p><img href="file://img/c3d-c2-02-05.png" data-zoom="40" alt="キャプションなし"/>
+<img href="file://img/c3d-c2-02-07.png" data-zoom="40" /></p>
+<figcaption>カーソルを押した方向に向きを変えるようになった</figcaption>
+<p>向きを記録するために、列挙体Directionと変数directionを定義し、カーソルを押した際にdirectionの値が変更されるようにします。directionの値に1.57fを掛けたものをMV1SetRotationXYZ関数の引数とします。この関数はx、y、z軸それぞれの回転角を記録したVECTOR型の値を指定します。注意してほしいのは単位が度数ではなく<strong>ラジアン</strong>だという点です。ラジアンは<strong>180度を1πラジアン</strong>と表す角度の単位で、90度ずつ回転させたい場合は1/2πですからπ（パイ）の半分の約1.57ラジアンとなります。directionの値はDOWN、LEFT、UP、RIGHTがそれぞれ0、1、2、3の整数値となるようにしているので、それを掛ければ90度ずつ向きを変えられるのです。</p>
+<table>
+<tr>
+<td>度数</td>
+<td>ラジアン</td>
+<td></td>
+</tr>
+<tr>
+<td>0度</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>30度</td>
+<td>1/6π</td>
+<td>0.52359687……</td>
+</tr>
+<tr>
+<td>45度</td>
+<td>1/4π</td>
+<td>0.7853981……</td>
+</tr>
+<tr>
+<td>60度</td>
+<td>1/3π</td>
+<td>1.0471975……</td>
+</tr>
+<tr>
+<td>90度</td>
+<td>1/2π</td>
+<td>1.5707963……</td>
+</tr>
+<tr>
+<td>120度</td>
+<td>2/3π</td>
+<td>2.0943951……</td>
+</tr>
+<tr>
+<td>180度</td>
+<td>π</td>
+<td>3.1415926……</td>
+</tr>
+<tr>
+<td>270度</td>
+<td>3/2π</td>
+<td>4.7123889……</td>
+</tr>
+<tr>
+<td>360度</td>
+<td>2π</td>
+<td>6.2831853……</td>
+</tr>
+</table>
+<div_hen><alert>編集</alert>編：要作図、表の右に</div_hen>
+<figure><img href="file://chap2fig/chap2fig.004.jpg" data-clip="0+0+300+310" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>ラジアンは人間にはなじみがないですが、コンピュータにとっては計算しやすいため、たいていの3Dプログラミングではラジアンを利用します。度数からラジアンに変換するには「度×π÷180」、ラジアンから度数に変換するには「ラジアン×180÷π」という計算を行いますが、いちいち変換するのも面倒なので「30度ならπ/6」のようにラジアンで考えるクセを付けるといいでしょう。</p>
+<table>
+<tr>
+<td>新しく登場した関数</td>
+</tr>
+<tr>
+<td><strong>MV1SetRotationXYZ関数</strong>
+機能：モデルの回転角度をセットする。
+文法：<code>int MV1SetRotationXYZ( int MHandle, VECTOR Rotate )</code></td>
+</tr>
+</table>
+<h2><alert>h2</alert>行列を使って変形する</h2>
+<p>ここまでで紹介したMV1SetPosition関数とMV1SetRotationXYZ関数に、拡大縮小を行う<strong>MV1SetScale関数</strong>を組み合わせると、モデル表示に必要な<strong>変形処理</strong>がひととおり行えるようになります。ただし、変形はモデルだけに行うとは限りません。主人公やモンスターの位置を調べてその方向に回転させるとか、主人公の少し後ろをカメラが追いかける場合などは、モデルではなく<strong>「向き」や「位置」などの情報を変形させる</strong>必要が出てきます。</p>
+<p>そのため、なるべく<strong>行列【ぎょうれつ】</strong>という計算方法を使って変形したほうが、「モデル」「向き」「位置」を同じ方式で計算できて便利です。行列は、Direct3DやDXライブラリ以外の3D系ミドルウェアでも使われているので、後々の勉強の意味でも慣れておくことをおすすめします。</p>
+<p>行列というのは高校で習う計算方法で、英語では<strong>Matrix【マトリックス】</strong>といい、表という意味も持っています。具体的には、次のように縦または横に規則正しく並んだ数値を計算するルールです。</p>
+<figure><img href="file://chap2fig/chap2fig.005.jpg" data-zoom="90" data-clip="0+0+760+350" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>足し算や引き算のときは、対応する要素同士で足し算や引き算を行い、かけ算のときは縦と横で掛け合わせて合計する感じです。少々ややこしいですが、実際の計算はコンピュータがやってくれるので完璧に覚える必要はありません。</p>
+<p>3D描画では座標を4列×1行の行列に、変形情報を4列×4行の行列に入れ、それを掛け合わせることで移動、拡大縮小、回転を行います。3次元の座標なのに4つ目の列があるのは計算の都合です。4列目は常に1を入れます。</p>
+<figure><img href="file://chap2fig/chap2fig.006.jpg" data-zoom="90" data-clip="0+0+770+350" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>なぜ変形に行列を使うのでしょうか？　3次元のモデルは無数の座標でできているため、モデルを変形するためにはそこに含まれる<strong>すべての頂点に対して変形の計算を行う</strong>必要があります。行列を使わない計算方法だと、移動・拡大縮小・回転はそれぞれ計算方法が違うので処理を切り替えなければいけませんし、三角関数などは計算が複雑なので、その処理はかなり重いものになります。行列の場合は、変形の計算は先に済ませて4×4列の変形行列に入れてしまうので、後はどんな変形でも<strong>決まり切った単純な足し算・かけ算の組み合わせ</strong>で済ませることができます。</p>
+<p>また、変形行列を掛け合わせることで<strong>1つにまとめる（連結する）</strong>ことができます。「モデルをX軸で回転して、移動してからY軸で回転して、拡大縮小してまた移動する……」といった複雑な変形でも、変形行列を1つにまとめてしまえば、計算量を大幅に減らすことができます。</p>
+<p>
+</p>
+<p>それでは実際にやってみましょう。コードを次のように変更してください。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1;</code></pre>
+<pre><code>    VECTOR pos = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> key;</code></pre>
+<pre><code>    <span_keyword>enum</span_keyword> Direction{ DOWN, LEFT, UP, RIGHT } direction = DOWN;</code></pre>
+<pre><code>    MATRIX mat1, mat2;  ★★マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){</code></pre>
+<pre><code>        <span_comment>//キー操作</span_comment></code></pre>
+<pre><code>        key = GetJoypadInputState(DX_INPUT_KEY_PAD1);</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_DOWN)   { pos.z -= <span_number>4.0f</span_number>; direction = DOWN; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_UP)     { pos.z += <span_number>4.0f</span_number>; direction = UP; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_LEFT)   { pos.x -= <span_number>4.0f</span_number>; direction = LEFT; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_RIGHT)  { pos.x += <span_number>4.0f</span_number>; direction = RIGHT; }</code></pre>
+<pre><code></code></pre>
+<pre><code>        ClearDrawScreen();</code></pre>
+<pre><code>        DrawBox(<span_number>0</span_number>, <span_number>0</span_number>, <span_number>1200</span_number>, <span_number>800</span_number>, <span_number>0xFFFFFF</span_number>, TRUE);</code></pre>
+<pre><code></code></pre>
+<pre><code>        mat1 = MGetRotY(<span_number>1.57f</span_number> * direction); ★★ここからマーカー</code></pre>
+<pre><code>        mat2 = MGetTranslate(pos);</code></pre>
+<pre><code>        MV1SetMatrix(model1, MMult(mat1, mat2));    ★★ここまでマーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>        MV1DrawModel(model1);</code></pre>
+<pre><code></code></pre>
+<pre><code>        ScreenFlip();</code></pre>
+<pre><code>    }</code></pre>
+<pre><code>    DxLib_End();</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>return</span_keyword> <span_number>0</span_number>;</code></pre>
+<pre><code>}</code></pre>
+</codelist>
+<p>変形行列を記憶するMATRIX構造体の変数mat1、mat2を2つ定義します。mat1には<strong>MGetRotY関数</strong>Y軸の回転行列をセットし、mat2には<strong>MGetTranslate関数</strong>で平行移動行列をセットします。mat1とmat2を<strong>MMult関数</strong>で連結して、<strong>MV1SetMatrix関数</strong>でモデルに設定します。実行すると結果は先ほどと変わらないことが確認できるはずです。MV1SetTranslate関数なども内部では行列を使っているので、結果が変わらないのは当然です。</p>
+<p>行列演算をする際に重要なのは、<strong>変形行列を連結（乗算）する順序</strong>です。回転と移動の場合でも、回転してから移動するのと、移動してから回転するのでは結果が大きく異なります。変形が思い通りにいかない場合は、まずそこを調べてみてください。</p>
+<figure><img href="file://chap2fig/chap2fig.007.jpg" data-clip="0+0+600+350" /></figure>
+<figcaption>キャプションなし</figcaption>
+<h3><alert>h3</alert>コラム：さまざまな座標系</h3>
+<p>DXライブラリはDirect3Dと同じ、奥に向かって<strong>Z軸が伸びる左手座標系</strong>を採用していますが、OpenGLは手前に向かってZ軸が伸びる<strong>右手座標系</strong>で、代表的な3D用ミドルウェアや3Dモデリングソフトにも右手座標系を採用しているものがあります。また、同じ左手座標系でもZ軸が上に伸びるZ-Upを採用しているものもあります。環境によってさまざまなので、違いはやむをえないと考えて、必要に応じて行列で変換することが多いようです。</p>
+<hr/>
+<p>（コラムここまで）</p>
+<h1><alert>h1</alert>モデルをアニメーションさせる</h1>
+<p>（リード文）モーションを読み込んで再生すると、モデルをアニメーションさせることができます。ここでは走るモーションを読み込み、移動時に走らせてみましょう。</p>
+<h2><alert>h2</alert>モーションとは</h2>
+<p>たいていのゲームではキャラクターが棒立ちになっていることはありません。生き物のように走ったり飛んだりします。計算でモデル各部の関節を動かすこともあるのですが、SwordBoutでは<strong>モーション</strong>を利用してモデルを動かします。モーションとは、モデリングツールなどで作成するキャラクターの動きを記録したアニメーションデータです。あらかじめ、走る、ジャンプする、攻撃するなどのモーションを作っておく必要はありますが、プログラムでは読み込んで再生するだけで簡単にモデルを動かすことができます。</p>
+<figure><img href="file://img/c3d-c2-03-01.png" data-zoom="60" /></figure>
+<figcaption>PC.mv1用には走る、飛ぶ、攻撃、防御などのモーションデータが作成済み</figcaption>
+<p>モーションもDXライブラリのモデルビューアーで確認できます。まずはどんなものなのか、読み込んで試してみましょう。PC1.mv1を読み込んだ状態で、モーションのmv1ファイルを追加読み込みします。</p>
+<figure><img href="file://img/c3d-c2-03-02.png" data-zoom="60" data-clip="0+0+1000+400" /></figure>
+<figcaption>キャプションなし</figcaption>
+<div_zuchuu><alert>図中</alert>［ファイル］メニュー→［アニメーションの追加読み込み］を選択</div_zuchuu>
+<p>↓</p>
+<figure><img href="file://img/c3d-c2-03-03.png" data-zoom="60" /></figure>
+<figcaption>キャプションなし</figcaption>
+<div_zuchuu><alert>図中</alert>「Anim_Run.mv1」を選択</div_zuchuu>
+<div_zuchuu><alert>図中</alert>［開く］をクリック</div_zuchuu>
+<p>［アニメーション］をクリックして［アニメーション一覧］からモーションを選択すると、モーションが適用されてモデルのポーズが変わります。</p>
+<figure><img href="file://img/c3d-c2-03-04.png" data-zoom="60" data-clip="0+0+1000+800" /></figure>
+<figcaption>キャプションなし</figcaption>
+<div_zuchuu><alert>図中</alert>［アニメーション］をクリック</div_zuchuu>
+<div_zuchuu><alert>図中</alert>確認したいモーションを選択</div_zuchuu>
+<p>［再生カウント］のスライダをドラッグすると、モーションにしたがってモデルを動かすことができます。</p>
+<div_hen><alert>編集</alert>編：小さくなっていいので横2×縦2で並べて矢印でつなぐ</div_hen>
+<p><img href="file://img/c3d-c2-03-05.png" data-zoom="30" data-clip="0+0+1200+812" alt="キャプションなし"/>
+<img href="file://img/c3d-c2-03-06.png" data-zoom="30" data-clip="0+0+1200+812" alt="キャプションなし"/>
+<img href="file://img/c3d-c2-03-07.png" data-zoom="30" data-clip="0+0+1200+812" alt="キャプションなし"/>
+<img href="file://img/c3d-c2-03-08.png" data-zoom="30" data-clip="0+0+1200+812" /></p>
+<figcaption>キャプションなし</figcaption>
+<h2><alert>h2</alert>モーションを読み込んで再生する</h2>
+<p>それではプログラムで試してみましょう。モーションを再生するステップは、モデルを単に表示するより少し複雑です。</p>
+<p>DXライブラリ専用のmv1形式ではモーションとモデルのデータ両方を持つため、モーションもMV1LoadModel関数で読み込みます。メモリに読み込んだ後も、1つのモデルハンドルでモデルデータとモーションデータをまとめて持つデータ構造になります。その中から再生したいモーションをモデルに<strong>アタッチ（結びつける）</strong>し、時間を少しずつ進めながらモデルを表示します。</p>
+<figure><img href="file://chap2fig/chap2fig.008.jpg" data-clip="0+0+750+300" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>mv1形式の仕様上は1つのファイルにまとめられますが、SwordBoutでは管理しやすさを優先してモデルとモーションが別ファイルになっています。ですから、プログラム内でも別々に読み込みます。今回は主人公が待機している状態の「Anim_Neutral.mv1」と、走っている状態の「Anim_Run.mv1」を読み込みます。まずは、ファイルを読み込んで待機状態のモーションを再生するところまでをやってみましょう。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1, anim_nutral, anim_run, attachidx;★★マーカー❶変数の用意</code></pre>
+<pre><code>    <span_keyword>float</span_keyword> anim_totaltime, playtime = <span_number>0.0f</span_number>;      ★★マーカー</code></pre>
+<pre><code>    VECTOR pos = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> key;</code></pre>
+<pre><code>    <span_keyword>enum</span_keyword> Direction{ DOWN, LEFT, UP, RIGHT } direction = DOWN;</code></pre>
+<pre><code>    MATRIX mat1, mat2;</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_nutral = MV1LoadModel(<span_string>"Player¥¥Anim_Neutral.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;★★ここからマーカー❷モーション読み込み</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_run = MV1LoadModel(<span_string>"Player¥¥Anim_Run.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    attachidx = MV1AttachAnim(model1, <span_number>0</span_number>, anim_nutral);  ❸モーション設定</code></pre>
+<pre><code>    anim_totaltime = MV1GetAttachAnimTotalTime(model1, attachidx);★★ここまでマーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){</code></pre>
+<pre><code>        <span_comment>//モーション進行   ★★ここからマーカー　❹モーション進行</span_comment></code></pre>
+<pre><code>        playtime += <span_number>0.5f</span_number>;</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (playtime &gt; anim_totaltime) playtime = <span_number>0.0f</span_number>;</code></pre>
+<pre><code>        MV1SetAttachAnimTime(model1, attachidx, playtime);  ★★ここまでマーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>        <span_comment>//キー操作</span_comment></code></pre>
+<pre><code>        key = GetJoypadInputState(DX_INPUT_KEY_PAD1);</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_DOWN)   { pos.z -= <span_number>4.0f</span_number>; direction = DOWN; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_UP)     { pos.z += <span_number>4.0f</span_number>; direction = UP; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_LEFT)   { pos.x -= <span_number>4.0f</span_number>; direction = LEFT; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_RIGHT)  { pos.x += <span_number>4.0f</span_number>; direction = RIGHT; }</code></pre>
+<pre><code></code></pre>
+<pre><code>        ClearDrawScreen();</code></pre>
+<pre><code>        DrawBox(<span_number>0</span_number>, <span_number>0</span_number>, <span_number>1200</span_number>, <span_number>800</span_number>, <span_number>0xFFFFFF</span_number>, TRUE);</code></pre>
+<pre><code></code></pre>
+<pre><code>        mat1 = MGetRotY(<span_number>1.57f</span_number> * direction);</code></pre>
+<pre><code>        mat2 = MGetTranslate(pos);</code></pre>
+<pre><code>        MV1SetMatrix(model1, MMult(mat1, mat2));</code></pre>
+<pre><code></code></pre>
+<pre><code>        MV1DrawModel(model1);</code></pre>
+<pre><code></code></pre>
+<pre><code>        ScreenFlip();</code></pre>
+<pre><code>    }</code></pre>
+<pre><code>    DxLib_End();</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>return</span_keyword> <span_number>0</span_number>;</code></pre>
+<pre><code>}</code></pre>
+</codelist>
+<h6><alert>h6</alert>❶変数の用意</h6>
+<p>モーションのモデルハンドルを記憶しておくための変数anim_nutral、anim_run、アタッチ番号を記憶するためのattachidxを定義します。モーションの総時間と現在時間はfloat型の秒数なので、それぞれを記憶するfloat型の変数anim_totaltime、playtimeも定義します。</p>
+<h6><alert>h6</alert>❷モーション読み込み</h6>
+<p>MV1LoadModel関数でモーションのファイルを読み込んで、モデルハンドルをanim_nutralとanim_runに代入します。</p>
+<h6><alert>h6</alert>❸モーション設定</h6>
+<p><strong>MV1AttachAnim関数</strong>で再生したいモーションをモデルに設定します。アタッチ番号が返されるので、attachidxに記憶します。このアタッチ番号を使用して、モーションの総時間を取得してanim_totaltimeに記憶します。</p>
+<h6><alert>h6</alert>❹モーション進行</h6>
+<p>ループの中でモーションの時間を進めていきます。ここではとりあえず0.5秒ずつ進めますが、本当はゲームの進行時間と合わせて再生しなくてはいけません。playtimeに0.5ずつ加算し、総時間のanim_totaltimeを超えないよう制限します。そして、MV1SetAttachAnimTime関数でplaytimeを設定します。</p>
+<p>
+</p>
+<p>実行するとAnim_Neutral.mv1が適用されて、主人公のモデルが待機のポーズを取ります。待機用なので派手には動きませんが、よく見ると体が微妙に動いているのがわかります。</p>
+<figure><img href="file://img/c3d-c2-03-10.png" data-zoom="40" /></figure>
+<figcaption>実行結果</figcaption>
+<table>
+<tr>
+<td>新しく登場した関数</td>
+</tr>
+<tr>
+<td><strong>MV1AttachAnim関数</strong>
+機能：MHandleのモデルに対し、モーション（アニメーション）をアタッチする。モデルとモーションが1つのモデルハンドルにまとまっている場合は、AnimIndexにモーション（アニメーション）番号、AnimSrcMHandleには-1を指定する。別ファイルの場合はAnimSrcMHandleにモーションを含むモデルハンドルを指定する。NameCheckにTRUEを指定すると、モデル／モーションに設定されているフレーム名をチェックし、一致していない場合はアタッチせずに-1を返す。
+文法：<code>int MV1AttachAnim( int MHandle, int AnimIndex, int AnimSrcMHandle, int NameCheck )</code></td>
+</tr>
+<tr>
+<td><strong>MV1GetAttachAnimTotalTime関数</strong>
+機能：アタッチしているモーションの総時間を取得する。Mhandleにモデルを、AttachIndexにアタッチ番号を指定する。
+文法：<code>float MV1GetAttachAnimTotalTime( int MHandle, int AttachIndex )</code></td>
+</tr>
+<tr>
+<td><strong>MV1SetAttachAnimTime関数</strong>
+機能：アタッチしているモーションの再生時間を設定する。MHandleにはモデルを、AttachIndexにアタッチ番号を、Timeには時間を秒数で指定する。
+文法：<code>int MV1SetAttachAnimTime( int MHandle, int AttachIndex, float Time )</code></td>
+</tr>
+</table>
+<h2><alert>h2</alert>モデルを走らせる</h2>
+<p>カーソルキーを押している間は走るモーションを再生するようにしましょう。モーションを切り替える場合は、<strong>MV1DetachAnim関数</strong>で古いモーションを<strong>デタッチ（切り離す）</strong>してから、新しいモーションをアタッチします。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1, anim_nutral, anim_run, attachidx;</code></pre>
+<pre><code>    <span_keyword>bool</span_keyword> running = FALSE;       ★★マーカー</code></pre>
+<pre><code>    <span_keyword>float</span_keyword> anim_totaltime, playtime = <span_number>0.0f</span_number>;</code></pre>
+<pre><code>    VECTOR pos = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> key;</code></pre>
+<pre><code>    <span_keyword>enum</span_keyword> Direction{ DOWN, LEFT, UP, RIGHT } direction = DOWN;</code></pre>
+<pre><code>    MATRIX mat1, mat2;</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_nutral = MV1LoadModel(<span_string>"Player¥¥Anim_Neutral.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_run = MV1LoadModel(<span_string>"Player¥¥Anim_Run.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    attachidx = MV1AttachAnim(model1, <span_number>0</span_number>, anim_nutral);</code></pre>
+<pre><code>    anim_totaltime = MV1GetAttachAnimTotalTime(model1, attachidx);</code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){</code></pre>
+<pre><code>        <span_comment>//モーション進行</span_comment></code></pre>
+<pre><code>        playtime += <span_number>0.1f</span_number>;</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (playtime &gt; anim_totaltime) playtime = <span_number>0.0f</span_number>;</code></pre>
+<pre><code>        MV1SetAttachAnimTime(model1, attachidx, playtime);</code></pre>
+<pre><code></code></pre>
+<pre><code>        <span_comment>//キー操作</span_comment></code></pre>
+<pre><code>        key = GetJoypadInputState(DX_INPUT_KEY_PAD1);</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_DOWN)   { pos.z -= <span_number>4.0f</span_number>; direction = DOWN; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_UP)     { pos.z += <span_number>4.0f</span_number>; direction = UP; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_LEFT)   { pos.x -= <span_number>4.0f</span_number>; direction = LEFT; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_RIGHT)  { pos.x += <span_number>4.0f</span_number>; direction = RIGHT; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key == <span_number>0</span_number>){  ★★ここからマーカー</code></pre>
+<pre><code>            <span_keyword>if</span_keyword> (running == <span_keyword>true</span_keyword>){</code></pre>
+<pre><code>                running = <span_keyword>false</span_keyword>;</code></pre>
+<pre><code>                MV1DetachAnim(model1, attachidx);</code></pre>
+<pre><code>                attachidx = MV1AttachAnim(model1, <span_number>0</span_number>, anim_nutral);</code></pre>
+<pre><code>                anim_totaltime = MV1GetAttachAnimTotalTime(model1, attachidx);</code></pre>
+<pre><code>            }</code></pre>
+<pre><code>        }</code></pre>
+<pre><code>        <span_keyword>else</span_keyword> {</code></pre>
+<pre><code>            <span_keyword>if</span_keyword> (running == <span_keyword>false</span_keyword>){</code></pre>
+<pre><code>                running = <span_keyword>true</span_keyword>;</code></pre>
+<pre><code>                MV1DetachAnim(model1, attachidx);</code></pre>
+<pre><code>                attachidx = MV1AttachAnim(model1, <span_number>0</span_number>, anim_run);</code></pre>
+<pre><code>                anim_totaltime = MV1GetAttachAnimTotalTime(model1, attachidx);</code></pre>
+<pre><code>            }</code></pre>
+<pre><code>        }       ★★ここまでマーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>        ClearDrawScreen();</code></pre>
+<pre><code>        DrawBox(<span_number>0</span_number>, <span_number>0</span_number>, <span_number>1200</span_number>, <span_number>800</span_number>, <span_number>0xFFFFFF</span_number>, TRUE);</code></pre>
+<pre><code></code></pre>
+<pre><code>        mat1 = MGetRotY(<span_number>1.57f</span_number> * direction);</code></pre>
+<pre><code>        mat2 = MGetTranslate(pos);</code></pre>
+<pre><code>        MV1SetMatrix(model1, MMult(mat1, mat2));</code></pre>
+<pre><code></code></pre>
+<pre><code>        MV1DrawModel(model1);</code></pre>
+<pre><code></code></pre>
+<pre><code>        ScreenFlip();</code></pre>
+<pre><code>    }</code></pre>
+<pre><code>    DxLib_End();</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>return</span_keyword> <span_number>0</span_number>;</code></pre>
+<pre><code>}</code></pre>
+</codelist>
+<p>移動と停止が切り替わったタイミングでアニメーションを変更したいので、現在移動中かどうかを記憶するbool型変数runningを定義します。初期値は走っていない状態のfalseです。</p>
+<p>キー操作の後に切り替え処理を追加します。キーが押されていないときは変数keyに0が入るので、keyが0でrunningがtrueのときは現在のモーションをデタッチして待機モーションをアタッチします。keyが0以外でrunningがfalseのときは、現在のモーションをデタッチして走るモーションをアタッチします。モーションごとに総時間が異なるので、アタッチ後は総時間を取得し直しています。</p>
+<div_hen><alert>編集</alert>編：横に並べる</div_hen>
+<p><img href="file://img/c3d-c2-03-11.png" data-zoom="30" alt="キャプションなし"/>
+↓<img href="file://img/c3d-c2-03-12.png" data-zoom="30" /></p>
+<figcaption>カーソルキーを押すと走る</figcaption>
+<h2><alert>h2</alert>モーションの移動を打ち消す</h2>
+<p>ここまでのサンプルを実行してみると、モデルの走る動きが少しおかしいはずです。進んでは戻り、進んでは戻るような動きになっています。モーション自体にモデルの移動が含まれていて（モデルビューアーでの再生を思い出してください）、プログラム上のワールド座標の移動と同期していないせいです。移動モーションの作り方には、モデルの位置を固定して手足だけを動かす方法と、モデル自体も移動させてしまう方法があります。後者のやり方のほうがリアルなモーションを付けやすいとされており、SwordBoutのモーションはこの方法で作られています。</p>
+<div_hen><alert>編集</alert>編：画像はc3d-c2-03-11.pngと12.pngを使ってください</div_hen>
+<figure><img href="file://chap2fig/chap2fig.009.jpg" data-clip="0+0+700+280" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>モーション内でモデルが移動する場合は、プログラム側で移動を打ち消してやらなければいけません。DXライブラリで移動を打ち消す場合、<strong>MV1SetFrameUserLocalMatrix関数</strong>を使って、rootフレームの変形行列に対して<strong>単位行列</strong>を設定します。単位行列というのはまったく変形しない行列のことで、<strong>MGetIdent関数</strong>で作成できます。</p>
+<codelist data-type="cpp">
+<pre><code>int root = MV1SearchFrame(model1, &#39;root&#39;);</code></pre>
+<pre><code>MV1SetFrameUserLocalMatrix(model1, root, MGetIdent());</code></pre>
+</codelist>
+<p>実際にやってみましょう。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1, anim_nutral, anim_run, attachidx, rootflm;  ★★マーカー</code></pre>
+<pre><code>    <span_keyword>bool</span_keyword> running = FALSE;</code></pre>
+<pre><code>    <span_keyword>float</span_keyword> anim_totaltime, playtime = <span_number>0.0f</span_number>;</code></pre>
+<pre><code>    VECTOR pos = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> key;</code></pre>
+<pre><code>    <span_keyword>enum</span_keyword> Direction{ DOWN, LEFT, UP, RIGHT } direction = DOWN;</code></pre>
+<pre><code>    MATRIX mat1, mat2;</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_nutral = MV1LoadModel(<span_string>"Player¥¥Anim_Neutral.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_run = MV1LoadModel(<span_string>"Player¥¥Anim_Run.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    attachidx = MV1AttachAnim(model1, <span_number>0</span_number>, anim_nutral);</code></pre>
+<pre><code>    anim_totaltime = MV1GetAttachAnimTotalTime(model1, attachidx);</code></pre>
+<pre><code>    rootflm = MV1SearchFrame(model1, <span_string>"root"</span_string>);   ★★マーカー</code></pre>
+<pre><code>    MV1SetFrameUserLocalMatrix(model1, rootflm, MGetIdent());       ★★マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){</code></pre>
+<pre><code>        <span_comment>//モーション進行</span_comment></code></pre>
+<pre><code>        playtime += <span_number>0.5f</span_number>;</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (playtime &gt; anim_totaltime) playtime = <span_number>0.0f</span_number>;</code></pre>
+<pre><code>        MV1SetAttachAnimTime(model1, attachidx, playtime);</code></pre>
+<pre><code>……後略……</code></pre>
+</codelist>
+<p><strong>MV1SearchFrame関数</strong>で「root」という名前のフレームの番号を取得し、そこに単位行列を設定します。これだけでちゃんと移動できるようになります。</p>
+<p>この方法ではモーションで想定していた移動量を完全に無視するため、速く走っているようなモーションなのにモデルがあまり移動していなかったりその逆になってしまうことがあります。SwordBoutでは、モーション内の移動量も反映させて処理を行っています（P.■■参照）。</p>
+<table>
+<tr>
+<td>新しく登場した関数</td>
+</tr>
+<tr>
+<td><strong>MV1SearchFrame関数</strong>
+機能：指定名のフレームをモデル中から検索し、フレーム番号を返す。見つからない場合は-2、エラーが発生した場合は-1を返す。
+文法：<code>int MV1SearchFrame( int MHandle, char *FrameName )</code></td>
+</tr>
+<tr>
+<td><strong>MV1SetFrameUserLocalMatrix関数</strong>
+機能：モデルのフレームに変換行列を設定する。いったん設定すると、MV1ResetFrameUserLocalMatrix関数で解除するまで、フレーム自体の行列を無視してこの行列が使用される。
+文法：<code>int MV1SetFrameUserLocalMatrix( int MHandle, int FrameIndex, MATRIX Matrix )</code></td>
+</tr>
+</table>
+<h3><alert>h3</alert>コラム：MikuMikuDanceのモーションを利用する</h3>
+<p>MikuMikuDance（<code>http://www.geocities.jp/higuchuu4/</code>）はフリーのモーション作成ツールとして人気のツールです。MikuMikuDanceで作成したモーションファイル（vmdファイル）もDXライブラリで利用可能です。MV1LoadModel関数でモデルファイル（pmd/pmx）とモーションファイルをまとめて読み込む仕様になっており、モーションファイルのファイル名は「（モデルファイルのファイル名）000.vmd」のような連番のファイル名とする必要があります。また、まとめて読み込むので、モデルとモーションは1つのモデルハンドルで管理された状態となります。モーションの再生方法はmv1ファイルの場合と変わりません。</p>
+<p>（コラムここまで）</p>
+<h1><alert>h1</alert>カメラを設定して視点を変える</h1>
+<p>3D空間にカメラを設定することで、自由な位置からモデルを見ることができます。ここでは合わせてベクトルについても解説します。</p>
+<h2><alert>h2</alert>カメラ設定の基礎知識</h2>
+<p>前にDXライブラリではウインドウの左端が原点になると説明しましたが、これは単に初期値の話です。3D空間ではカメラの設定——つまり、<strong>どこから見るか</strong>を決めることで、モデルの見え方を自由に変えることができます。</p>
+<p>カメラの設定は<strong>視点</strong>、<strong>注視点</strong>、<strong>上方向</strong>の3つのパラメータで設定します。視点はカメラがある座標、注視点はカメラが見る座標で、この2点でカメラの向きを表します。ただしこの2点だけでは、どちらが上でどちらが下かわからないので、上方向を表す情報も必要です。</p>
+<figure><img href="file://chap2fig/chap2fig.010.jpg" data-clip="0+0+680+320" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>この3つの情報から<strong>ビュー変換行列</strong>と呼ばれる変換行列が作られ、それが各モデルの座標値に適用されてカメラから見た状態になります。</p>
+<p>実際にプログラムしてみましょう。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1, anim_nutral, anim_run, attachidx, rootflm;</code></pre>
+<pre><code>    <span_keyword>bool</span_keyword> running = FALSE;</code></pre>
+<pre><code>    <span_keyword>float</span_keyword> anim_totaltime, playtime = <span_number>0.0f</span_number>;</code></pre>
+<pre><code>    VECTOR pos = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);</code></pre>
+<pre><code>    VECTOR cpos = VGet(<span_number>600.0f</span_number>, <span_number>600.0f</span_number>, -<span_number>400.0f</span_number>), ctgt = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);★★マーカー</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> key;</code></pre>
+<pre><code>    <span_keyword>enum</span_keyword> Direction{ DOWN, LEFT, UP, RIGHT } direction = DOWN;</code></pre>
+<pre><code>    MATRIX mat1, mat2;</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_nutral = MV1LoadModel(<span_string>"Player¥¥Anim_Neutral.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_run = MV1LoadModel(<span_string>"Player¥¥Anim_Run.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    attachidx = MV1AttachAnim(model1, <span_number>0</span_number>, anim_nutral);</code></pre>
+<pre><code>    anim_totaltime = MV1GetAttachAnimTotalTime(model1, attachidx);</code></pre>
+<pre><code>    rootflm = MV1SearchFrame(model1, <span_string>"root"</span_string>);</code></pre>
+<pre><code>    MV1SetFrameUserLocalMatrix(model1, rootflm, MGetIdent());</code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//カメラ設定</span_comment></code></pre>
+<pre><code>    SetCameraPositionAndTargetAndUpVec(cpos, ctgt, VGet(<span_number>0.0f</span_number>, <span_number>0.0f</span_number>, <span_number>1.0f</span_number>)); ★★マーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){</code></pre>
+<pre><code>        <span_comment>//モーション進行</span_comment></code></pre>
+<pre><code>        playtime += <span_number>0.5f</span_number>;</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (playtime &gt; anim_totaltime) playtime = <span_number>0.0f</span_number>;</code></pre>
+<pre><code>        MV1SetAttachAnimTime(model1, attachidx, playtime);</code></pre>
+<pre><code>……後略……</code></pre>
+</codelist>
+<p>視点と注視点を変数cposとctgtにセットし、<strong>SetCameraPositionAndTargetAndUpVec関数</strong>で設定します。注視点はモデルの座標と同じにし、視点は注視点からY軸に沿って300上に移動した位置としました。上方向にはZ軸方向のベクトルを設定しています。ベクトルについては後で説明しますが、これでモデルを真上から見下ろすようなカメラが設定されたことになります。</p>
+<div_hen><alert>編集</alert>編：横に並べる</div_hen>
+<p><img href="file://img/c3d-c2-03-13.png" data-zoom="30" alt="キャプションなし"/>
+<img href="file://img/c3d-c2-03-14.png" data-zoom="30" /></p>
+<figcaption>真上から見下ろした状態になった</figcaption>
+<h2><alert>h2</alert>ベクトルで向きを表す</h2>
+<p>SetCameraPositonAndTargetAndUpVec関数の第3引数では、VGet関数でVECTOR型の値を指定しました。VECTOR型はこれまでも座標の指定に使ってきましたが、ここで設定したのは座標ではなく<strong>ベクトル</strong>です。座標と同じくx、y、zの3つの値で構成されていますが、位置ではなく向きと移動量を表します。（0, 1, 0）であれば「Y軸方向に1進む向き」を意味するのです。</p>
+<figure><img href="file://chap2fig/chap2fig.011.jpg" data-clip="0+0+680+320" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>ベクトルはカメラの向きを表す他に、ゲームのキャラクターが向いている方向など、方向を表すさまざまな状況で使われるとても重要な概念です。ベクトルはその長さによって移動量（速度）を表すことができますが、移動量を含まない向きだけを表すベクトルが必要な場合は<strong>長さが1</strong>になるよう調整します。長さを1にすることを<strong>正規化</strong>と呼び、正規化したベクトルを<strong>法線【ほうせん】ベクトル</strong>と呼びます。</p>
+<p>正規化することと、x、y、zの値を1にすることはまったく違うので誤解しないでください。たとえば（1, 1, 0）というベクトルを正規化すると、（約0.7, 約0.7, 0）となります。</p>
+<figure><img href="file://chap2fig/chap2fig.012.jpg" data-zoom="90" data-clip="0+0+750+220" /></figure>
+<figcaption>キャプションなし</figcaption>
+<h2><alert>h2</alert>モデルを追跡する</h2>
+<p>カメラの利用例として、モデルの後ろからカメラが追いかけるようにしてみましょう。</p>
+<h5><alert>h5</alert>WinMain.cpp</h5>
+<codelist data-type="cpp">
+<pre><code><span_preprocessor>#include &lt;DxLib.h&gt;</span_preprocessor></code></pre>
+<pre><code></code></pre>
+<pre><code><span_keyword>int</span_keyword> WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lpC, <span_keyword>int</span_keyword> nC){</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> model1, anim_nutral, anim_run, attachidx, rootflm;</code></pre>
+<pre><code>    <span_keyword>bool</span_keyword> running = FALSE;</code></pre>
+<pre><code>    <span_keyword>float</span_keyword> anim_totaltime, playtime = <span_number>0.0f</span_number>;</code></pre>
+<pre><code>    VECTOR pos = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);</code></pre>
+<pre><code>    VECTOR cpos = VGet(<span_number>600.0f</span_number>, <span_number>600.0f</span_number>, -<span_number>400.0f</span_number>), ctgt = VGet(<span_number>600.0f</span_number>, <span_number>300.0f</span_number>, -<span_number>400.0f</span_number>);</code></pre>
+<pre><code>    <span_keyword>int</span_keyword> key;</code></pre>
+<pre><code>    <span_keyword>enum</span_keyword> Direction{ DOWN, LEFT, UP, RIGHT } direction = DOWN;</code></pre>
+<pre><code>    MATRIX mat1, mat2;</code></pre>
+<pre><code></code></pre>
+<pre><code>    ChangeWindowMode(TRUE);</code></pre>
+<pre><code>    SetGraphMode(<span_number>1200</span_number>, <span_number>800</span_number>, <span_number>32</span_number>);</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> (DxLib_Init() == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//モデル読み込み</span_comment></code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((model1 = MV1LoadModel(<span_string>"Player¥¥PC.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_nutral = MV1LoadModel(<span_string>"Player¥¥Anim_Neutral.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    <span_keyword>if</span_keyword> ((anim_run = MV1LoadModel(<span_string>"Player¥¥Anim_Run.mv1"</span_string>)) == -<span_number>1</span_number>) <span_keyword>return</span_keyword> -<span_number>1</span_number>;</code></pre>
+<pre><code>    attachidx = MV1AttachAnim(model1, <span_number>0</span_number>, anim_nutral);</code></pre>
+<pre><code>    anim_totaltime = MV1GetAttachAnimTotalTime(model1, attachidx);</code></pre>
+<pre><code>    rootflm = MV1SearchFrame(model1, <span_string>"root"</span_string>);</code></pre>
+<pre><code>    MV1SetFrameUserLocalMatrix(model1, rootflm, MGetIdent());</code></pre>
+<pre><code></code></pre>
+<pre><code>    SetDrawScreen(DX_SCREEN_BACK);</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_comment>//カメラ設定</span_comment></code></pre>
+<pre><code>    SetCameraPositionAndTargetAndUpVec(cpos, ctgt, VGet(<span_number>0.0f</span_number>, <span_number>0.0f</span_number>, <span_number>1.0f</span_number>));</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>while</span_keyword> (ProcessMessage() == <span_number>0</span_number> &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == <span_number>0</span_number>){</code></pre>
+<pre><code>        <span_comment>//モーション進行</span_comment></code></pre>
+<pre><code>        playtime += <span_number>0.5f</span_number>;</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (playtime &gt; anim_totaltime) playtime = <span_number>0.0f</span_number>;</code></pre>
+<pre><code>        MV1SetAttachAnimTime(model1, attachidx, playtime);</code></pre>
+<pre><code></code></pre>
+<pre><code>        <span_comment>//キー操作</span_comment></code></pre>
+<pre><code>        key = GetJoypadInputState(DX_INPUT_KEY_PAD1);</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_DOWN)   { pos.z -= <span_number>4.0f</span_number>; direction = DOWN; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_UP)     { pos.z += <span_number>4.0f</span_number>; direction = UP; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_LEFT)   { pos.x -= <span_number>4.0f</span_number>; direction = LEFT; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key &amp; PAD_INPUT_RIGHT)  { pos.x += <span_number>4.0f</span_number>; direction = RIGHT; }</code></pre>
+<pre><code>        <span_keyword>if</span_keyword> (key == <span_number>0</span_number>){</code></pre>
+<pre><code>            <span_keyword>if</span_keyword> (running == <span_keyword>true</span_keyword>){</code></pre>
+<pre><code>                running = <span_keyword>false</span_keyword>;</code></pre>
+<pre><code>                MV1DetachAnim(model1, attachidx);</code></pre>
+<pre><code>                attachidx = MV1AttachAnim(model1, <span_number>0</span_number>, anim_nutral);</code></pre>
+<pre><code>                anim_totaltime = MV1GetAttachAnimTotalTime(model1, attachidx);</code></pre>
+<pre><code>            }</code></pre>
+<pre><code>        }</code></pre>
+<pre><code>        <span_keyword>else</span_keyword> {</code></pre>
+<pre><code>            <span_keyword>if</span_keyword> (running == <span_keyword>false</span_keyword>){</code></pre>
+<pre><code>                running = <span_keyword>true</span_keyword>;</code></pre>
+<pre><code>                MV1DetachAnim(model1, attachidx);</code></pre>
+<pre><code>                attachidx = MV1AttachAnim(model1, <span_number>0</span_number>, anim_run);</code></pre>
+<pre><code>                anim_totaltime = MV1GetAttachAnimTotalTime(model1, attachidx);</code></pre>
+<pre><code>            }</code></pre>
+<pre><code>        }</code></pre>
+<pre><code></code></pre>
+<pre><code>        ClearDrawScreen();</code></pre>
+<pre><code>        DrawBox(<span_number>0</span_number>, <span_number>0</span_number>, <span_number>1200</span_number>, <span_number>800</span_number>, <span_number>0xFFFFFF</span_number>, TRUE);</code></pre>
+<pre><code></code></pre>
+<pre><code>        mat1 = MGetRotY(<span_number>1.57f</span_number> * direction);</code></pre>
+<pre><code>        mat2 = MGetTranslate(pos);</code></pre>
+<pre><code>        MV1SetMatrix(model1, MMult(mat1, mat2));</code></pre>
+<pre><code></code></pre>
+<pre><code>        SetCameraPositionAndTargetAndUpVec(★★ここからマーカー</code></pre>
+<pre><code>            VAdd(pos, VTransform(VGet(<span_number>0.0f</span_number>, <span_number>150.0f</span_number>, <span_number>100.0f</span_number>), mat1)),</code></pre>
+<pre><code>            VAdd(pos, VTransform(VGet(<span_number>0.0f</span_number>, <span_number>100.0f</span_number>, -<span_number>100.0f</span_number>), mat1)),</code></pre>
+<pre><code>            VGet(<span_number>0.0f</span_number>, <span_number>1.0f</span_number>, <span_number>0.0f</span_number>));    ★★ここまでマーカー</code></pre>
+<pre><code></code></pre>
+<pre><code>        MV1DrawModel(model1);</code></pre>
+<pre><code></code></pre>
+<pre><code>        ScreenFlip();</code></pre>
+<pre><code>    }</code></pre>
+<pre><code>    DxLib_End();</code></pre>
+<pre><code></code></pre>
+<pre><code>    <span_keyword>return</span_keyword> <span_number>0</span_number>;</code></pre>
+<pre><code>}</code></pre>
+</codelist>
+<p>SetCameraPositionAndTargetAndUpVec関数で、視点がモデルの少し後ろ、注視点がモデルの少し手前、上方向は（0, 1, 0）となるように設定しました。少し後ろと少し手前の座標を得るために、（0, 150, 100）と（0, 100, -100）というベクトルをVGet関数で作成し、回転行列を記憶したmat1を使って主人公の向きと合うように回転します。モデルではなくベクトルや座標を変形するときは<strong>VTransform関数</strong>を使用します。回転したベクトルをモデル位置のposに<strong>VAdd関数</strong>で足すと、目的の座標が得られます。</p>
+<p>周りに物体がないのでわかりにくいのですが、モデルと一緒にカメラが移動するため、いくら動き回っても常に後ろから見た状態となります。</p>
+<p><img href="file://img/c3d-c2-03-15.png" data-zoom="30" alt="キャプションなし"/>
+<img href="file://img/c3d-c2-03-16.png" data-zoom="30" /></p>
+<figcaption>移動しても常に後ろから見た状態</figcaption>
+<table>
+<tr>
+<td>新しく登場した関数</td>
+</tr>
+<tr>
+<td><strong>SetCameraPositionAndTargetAndUpVec関数</strong>
+機能：カメラの視点、注視点、上方向を設定する。
+文法：<code>int SetCameraPositionAndTargetAndUpVec( VECTOR Position, VECTOR Target, VECTOR Up )</code></td>
+</tr>
+<tr>
+<td><strong>VTransform関数</strong>
+機能：行列を利用してベクトル・座標を変換する。
+文法：<code>VECTOR VTransform( VECTOR InV, MATRIX InM )</code></td>
+</tr>
+<tr>
+<td><strong>VAdd関数</strong>
+機能：2つのベクトルを加算する。
+文法：<code>int MV1SetFrameUserLocalMatrix( int MHandle, int FrameIndex, MATRIX Matrix )</code></td>
+</tr>
+</table>
+<p>これで、モデルの表示、モーション（アニメーション）の再生、カメラの設定、変形、行列、ベクトルといった3D描画の基礎をひととおり解説しました。ここまでで説明した内容を応用していくだけでも、簡単なゲームなら作れないこともありませんが、あくまでほんの基礎でしかありません。次の章からはいよいよSwordBoutのサンプルを見ていきます。</p>
+<h3><alert>h3</alert>コラム：Direct3Dの場合</h3>
+<p>DXライブラリの3D描画関数で特徴的なのが、1つのモデルハンドルでモデルデータと移動・回転などの変形データ、モーションなどをまとめて管理できる点です。Direct3Dなどの低レベルAPIの場合、各データはバラバラに管理されています。描画する際は、ワールド変換行列を設定→モデルの頂点データを設定→ワールド変換行列を設定→モデルの頂点データを設定……を必要なだけ繰り返し、ビュー変換行列や射影変換行列（3次元データを2次元化する変形）を設定してレンダリングを実行します。</p>
+<figure><img href="file://chap2fig/chap2fig.013.jpg" data-clip="0+0+600+160" /></figure>
+<figcaption>キャプションなし</figcaption>
+<p>1つの物体を描画するために使う情報がバラバラでは管理しにくいので、たいていの3D系ミドルウェアは管理しやすくするために工夫しています。DXライブラリのモデルハンドルを基準とした管理方法もその1つなのです。</p>
+<hr/>
+<p>（コラムここまで）</p>
+<script src='http://localhost:35732/livereload.js'></script>
+</body>
+</story>

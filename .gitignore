@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+tmp
+*.indd
+chap2_test.xml
+test/chap2fig
+test/img
