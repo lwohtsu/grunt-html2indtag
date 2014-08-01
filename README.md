@@ -1,6 +1,8 @@
 # grunt-html2indtag
 
-> The best Grunt plugin ever.
+grunt-markdownで生成したhtmlファイル決め打ちのコンバートプラグインです。
+
+InDesign（CS4以降）で読み込むのに都合がいいxmlファイルを生成します。
 
 ## Getting Started
 This plugin requires Grunt `~0.4.5`
