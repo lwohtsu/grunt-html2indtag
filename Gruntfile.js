@@ -24,7 +24,7 @@ module.exports = function(grunt) {
         //見出しが目立ちにくい場合は、trueにすると記号が入る
         midashialert: true
       }
-    },
+    }
 
   });
 
