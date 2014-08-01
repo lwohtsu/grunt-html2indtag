@@ -4,6 +4,10 @@ grunt-markdownで生成したhtmlファイル決め打ちのコンバートプ�
 
 InDesign（CS4以降）で読み込むのに都合がいいxmlファイルを生成します。
 
+xml読み込みだけでやり切れない次の処理はInDesignのスクリプトで対応します。
+
+「画像のサイズ変更とクリッピング」「表の作成」「表組みのコード枠作成」「ソースコードの一部に黄色いマーカーを引く」
+
 ## Getting Started
 This plugin requires Grunt `~0.4.5`
 
