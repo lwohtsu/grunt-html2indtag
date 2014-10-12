@@ -1,5 +1,7 @@
 # grunt-html2indtag
 
+grunt-makdown-custom（https://github.com/lwohtsu/grunt-makdown-custom）のほうに統合します。
+
 grunt-markdown-customで生成したhtmlファイル決め打ちのコンバートプラグインです。
 
 InDesign（CS4以降）で読み込むのに都合がいいxmlファイルを生成します。
